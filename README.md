@@ -2,6 +2,11 @@
 
 Projeto em grupo: app de receitas com **React (HTML + JS)** no frontend e **Python (Flask + SQLite)** no backend, versionado com **Gitflow**.
 
+## 📚 Documentação
+
+A documentação completa está na pasta [`docs/`](docs/README.md):
+[como rodar](docs/como-rodar.md) · [arquitetura](docs/arquitetura.md) · [telas](docs/telas.md) · [API](docs/api.md) · [banco de dados](docs/banco-de-dados.md) · [Gitflow e organização](docs/gitflow.md)
+
 ## Telas
 
 | Tela | Descrição | Branch |
