@@ -2,6 +2,24 @@
 
 Projeto em grupo: app de receitas com **React (HTML + JS)** no frontend e **Python (Flask + SQLite)** no backend, versionado com **Gitflow**.
 
+## 👥 Equipe
+
+| Nome | GitHub | Papel |
+|---|---|---|
+| Fernando Canario | [@FeCanario](https://github.com/FeCanario) | _PO / SM (preencher)_ |
+| Gabriel Frigo | [@gfrigo](https://github.com/gfrigo) | Developer |
+| _Nome (preencher)_ | [@userbrun1n](https://github.com/userbrun1n) | _Papel (preencher)_ |
+| _Nome (preencher)_ | _@usuario_ | _Papel (preencher)_ |
+
+## 🔐 Regras do login
+
+- **L1** Cadastro com e-mail e senha válidos; a senha é gravada com hash.
+- **L2** Login correto retorna um token e os dados do usuário.
+- **L3** Senha errada retorna erro genérico ("E-mail ou senha incorretos"), sem dizer qual dos dois falhou.
+- **L4** E-mail vazio ou sem `@` é rejeitado (400) antes de consultar o banco.
+- **L5** Após 3 senhas erradas seguidas a conta é bloqueada por 10 minutos (423), mesmo com a senha certa.
+- **L6** Senha com menos de 8 caracteres é rejeitada no cadastro (400).
+
 ## 📚 Documentação
 
 A documentação completa está na pasta [`docs/`](docs/README.md):
@@ -37,6 +55,25 @@ npm run dev
 
 Abra http://localhost:5173, crie uma conta e pronto. O banco (`backend/receitas.db`) é criado sozinho com 3 receitas de exemplo.
 
+## Como rodar os testes
+
+Os testes automatizados (T1 a T6, um para cada regra do login) usam `pytest` e um banco temporário, sem mexer no `receitas.db`:
+
+```bash
+cd backend
+pip install -r requirements.txt
+pytest
+```
+
+| Teste | O que verifica |
+|---|---|
+| T1 | Cadastro válido grava a senha com hash (diferente da digitada) |
+| T2 | Login correto retorna sucesso e identifica o usuário |
+| T3 | Senha errada retorna erro genérico |
+| T4 | E-mail vazio ou sem `@` é rejeitado |
+| T5 | Quarta tentativa após 3 erros é recusada, mesmo com a senha certa |
+| T6 | Senha com menos de 8 caracteres é rejeitada |
+
 ## Estrutura
 
 ```
@@ -46,6 +83,7 @@ backend/
   auth_utils.py       # @login_obrigatorio (token no header Authorization)
   routes/             # uma rota (blueprint) por tela
     auth.py  explorar.py  cadastrar.py  favoritos.py  lista_compras.py
+  tests/              # testes automatizados do login (pytest)
 frontend/
   src/
     api.js            # todas as chamadas ao backend
