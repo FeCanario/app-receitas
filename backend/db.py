@@ -19,6 +19,12 @@ CREATE TABLE IF NOT EXISTS tokens (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id)
 );
 
+CREATE TABLE IF NOT EXISTS tentativas_login (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
+    falhas INTEGER NOT NULL DEFAULT 0,
+    bloqueado_ate REAL NOT NULL DEFAULT 0   -- timestamp (segundos); 0 = não bloqueado
+);
+
 CREATE TABLE IF NOT EXISTS receitas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,

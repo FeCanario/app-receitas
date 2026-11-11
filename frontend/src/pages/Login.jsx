@@ -46,7 +46,7 @@ export default function Login() {
         </label>
         <label>
           Senha
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required minLength={4} />
+          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required minLength={8} />
         </label>
 
         {erro && <p className="erro">{erro}</p>}
