@@ -1,5 +1,6 @@
 """Tela de Login: cadastro de usuário, login e logout."""
 import secrets
+import time
 
 from flask import Blueprint, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -8,6 +9,15 @@ from auth_utils import login_obrigatorio
 from db import get_db
 
 bp = Blueprint("auth", __name__)
+
+SENHA_MINIMA = 8
+MAX_FALHAS = 3
+BLOQUEIO_SEGUNDOS = 10 * 60
+
+
+def _email_valido(email):
+    """Validação simples, feita antes de qualquer consulta ao banco."""
+    return bool(email) and "@" in email and not email.startswith("@") and not email.endswith("@")
 
 
 def _criar_token(usuario_id):
@@ -25,8 +35,12 @@ def registrar():
     email = (dados.get("email") or "").strip().lower()
     senha = dados.get("senha") or ""
 
-    if not nome or not email or len(senha) < 4:
-        return jsonify({"erro": "Preencha nome, e-mail e uma senha com pelo menos 4 caracteres"}), 400
+    if not nome:
+        return jsonify({"erro": "Informe seu nome"}), 400
+    if not _email_valido(email):
+        return jsonify({"erro": "Informe um e-mail válido"}), 400
+    if len(senha) < SENHA_MINIMA:
+        return jsonify({"erro": f"A senha deve ter pelo menos {SENHA_MINIMA} caracteres"}), 400
 
     db = get_db()
     if db.execute("SELECT 1 FROM usuarios WHERE email = ?", (email,)).fetchone():
@@ -50,10 +64,35 @@ def login():
     email = (dados.get("email") or "").strip().lower()
     senha = dados.get("senha") or ""
 
-    row = get_db().execute("SELECT * FROM usuarios WHERE email = ?", (email,)).fetchone()
-    if row is None or not check_password_hash(row["senha_hash"], senha):
+    if not _email_valido(email):
+        return jsonify({"erro": "Informe um e-mail válido"}), 400
+
+    db = get_db()
+    row = db.execute("SELECT * FROM usuarios WHERE email = ?", (email,)).fetchone()
+    if row is None:
         return jsonify({"erro": "E-mail ou senha incorretos"}), 401
 
+    controle = db.execute(
+        "SELECT falhas, bloqueado_ate FROM tentativas_login WHERE usuario_id = ?", (row["id"],)
+    ).fetchone()
+    falhas = controle["falhas"] if controle else 0
+    bloqueado_ate = controle["bloqueado_ate"] if controle else 0
+
+    if bloqueado_ate > time.time():
+        return jsonify({"erro": "Conta bloqueada temporariamente. Tente novamente em alguns minutos"}), 423
+
+    if not check_password_hash(row["senha_hash"], senha):
+        falhas += 1
+        bloqueio = time.time() + BLOQUEIO_SEGUNDOS if falhas >= MAX_FALHAS else 0
+        db.execute(
+            "INSERT OR REPLACE INTO tentativas_login (usuario_id, falhas, bloqueado_ate) VALUES (?, ?, ?)",
+            (row["id"], 0 if bloqueio else falhas, bloqueio),
+        )
+        db.commit()
+        return jsonify({"erro": "E-mail ou senha incorretos"}), 401
+
+    db.execute("DELETE FROM tentativas_login WHERE usuario_id = ?", (row["id"],))
+    db.commit()
     return jsonify({
         "token": _criar_token(row["id"]),
         "usuario": {"id": row["id"], "nome": row["nome"], "email": row["email"]},
